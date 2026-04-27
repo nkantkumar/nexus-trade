@@ -1,0 +1,138 @@
+
+Trading Typical services
+--    Identity Services
+        Handles:
+        Login
+        JWT/OAuth2
+        MFA
+        Session management
+        API keys
+--    Order management
+        Tracks:
+        order lifecycle
+        status
+        routing
+        fills
+        cancellations
+        Responsibilities:
+        Create orders
+        Modify/cancel
+        Track states
+        Handle retries
+        Persist trade
+--    Market data streaming
+        Consumes:
+        stock prices
+        order books
+        forex feeds
+        crypto ticks
+        Produces:
+        normalized market streams
+        Responsibilities
+        Tick ingestion
+        Feed normalization
+        Symbol mapping
+        Order book reconstruction
+        Fan-out streaming
+--    Risk engine
+        position limits
+        exposure limits
+        fat finger checks
+        margin checks
+        credit checks
+--    Portfolio management
+        Tracks:
+        holdings
+        PnL
+        exposure
+        realized/unrealized gains
+        Important Metrics:
+        Sharpe ratio
+        VaR
+        drawdown
+--    Pricing engine
+        Calculates:
+        derivatives pricing
+        options Greeks
+        mark-to-market
+        NAV
+        Uses:
+        Black-Scholes
+        Monte Carlo
+        volatility models
+--    Trade execution
+        Responsibilities:
+        Smart order routing
+        Venue selection
+        Best execution
+        Liquidity discovery
+--    Compliance
+        Responsibilities:
+        AML
+        KYC
+        sanctions screening
+        trade surveillance
+        Detect:
+        spoofing
+        wash trading
+        insider trading
+--    Matching Engine(Exchange side)
+        Responsibilities:
+        Match buyers/sellers
+        Maintain order book
+        Price-time priority
+        Requirements:
+        microsecond latency
+        lock-free architecture
+        CPU affinity
+        kernel bypass sometimes
+
+--   Settlement & Clearing Service
+        Handles:
+        post-trade settlement
+        reconciliation
+        fund movement
+        Protocols:
+        SWIFT MT/MX
+        FIX
+        ISO 20022
+        Common tech stack
+--   Notification Service
+        Sends:
+        trade confirmations
+        margin alerts
+        OTPs
+        risk alerts
+
+--   Reporting Service
+        Responsibilities:
+        immutable audit logs
+        regulatory reporting
+        trade history
+        replay systems
+
+--   Refrence Data Service
+        Stores:
+        symbols
+        exchange metadata
+        holidays
+        trading sessions
+        currency mappings
+--   Strategy/Algo engine
+        Examples:
+        HFT
+        arbitrage
+        market making
+        mean reversion
+        momentum
+
+Java 
+spring
+Kafka
+Aeron
+Redis
+Kubernetes
+gcp
+oauth
+FIX
+Chronicle Queue

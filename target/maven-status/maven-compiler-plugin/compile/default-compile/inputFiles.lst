@@ -1,0 +1,17 @@
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/NexusTradeApplication.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/compliance/ComplianceService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/execution/ExecutionRouterService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/identity/IdentityService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/identity/TotpUtil.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/marketdata/MarketDataService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/matching/MatchingEngineService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/notification/NotificationService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/order/OrderEntity.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/order/OrderService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/portfolio/PortfolioService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/pricing/PricingService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/referencedata/ReferenceDataService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/reporting/ReportingService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/risk/RiskEngineService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/settlement/SettlementService.java
+/Users/nishi/Documents/GitHub/nexus-trade/src/main/java/com/trading/strategy/StrategyEngineService.java
