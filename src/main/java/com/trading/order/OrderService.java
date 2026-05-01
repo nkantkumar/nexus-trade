@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -102,8 +101,5 @@ public class OrderService {
 
 enum OrderState { NEW, PENDING_ACK, PARTIALLY_FILLED, FILLED, CANCELLED, REJECTED }
 
-record CreateOrderCommand(String symbol, long quantity, BigDecimal limitPrice) {}
 record ModifyOrderCommand(UUID orderId, long quantity, BigDecimal limitPrice) {}
 record OrderEvent(UUID orderId, String eventType) {}
-
-interface OrderRepository extends JpaRepository<OrderEntity, UUID> {}

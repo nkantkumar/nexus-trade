@@ -32,10 +32,12 @@ public class PortfolioService {
         Position p = positions.getOrDefault(symbol, new Position());
         return new PortfolioSnapshot(symbol, p.netQty, p.realizedPnl(), p.unrealizedPnl(), p.sharpeRatio(), p.maxDrawdown(), p.var95());
     }
-}
 
-record PortfolioExecutionEvent(String accountId, String symbol, long qty, double price) {}
-record PortfolioSnapshot(String symbol, long quantity, double realizedPnl, double unrealizedPnl, double sharpe, double maxDrawdown, double var95) {}
+    /** Clears in-memory positions; for BDD and integration tests only. */
+    public void resetForTests() {
+        positions.clear();
+    }
+}
 
 final class Position {
     long netQty;

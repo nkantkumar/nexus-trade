@@ -1,7 +1,7 @@
 package com.trading.risk;
 
-import io.aeron.Aeron;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class RiskEngineService {
     private final List<RiskCheck> checks;
-    private final Aeron aeron;
 
     public RiskEngineService(StringRedisTemplate redisTemplate) {
         this.checks = List.of(
@@ -18,7 +17,6 @@ public class RiskEngineService {
                 new FatFingerCheck(),
                 new MarginCheck(),
                 new CreditLimitCheck());
-        this.aeron = Aeron.connect();
     }
 
     public RiskResult preTradeCheck(TradeIntent intent) {
@@ -30,14 +28,6 @@ public class RiskEngineService {
         }
         return new RiskResult.Approved("all checks passed");
     }
-}
-
-record TradeIntent(String accountId, String symbol, long quantity, BigDecimal price, BigDecimal vwap, BigDecimal margin) {}
-
-sealed interface RiskResult permits RiskResult.Approved, RiskResult.Rejected, RiskResult.Breach {
-    record Approved(String detail) implements RiskResult {}
-    record Rejected(String reason) implements RiskResult {}
-    record Breach(String severity, String reason) implements RiskResult {}
 }
 
 interface RiskCheck { RiskResult apply(TradeIntent intent); }
@@ -62,7 +52,13 @@ class NotionalLimitCheck implements RiskCheck {
 }
 class FatFingerCheck implements RiskCheck {
     @Override public RiskResult apply(TradeIntent intent) {
-        BigDecimal delta = intent.price().subtract(intent.vwap()).abs().divide(intent.vwap(), BigDecimal.ROUND_HALF_UP);
+        if (intent.vwap().signum() == 0) {
+            return new RiskResult.Approved("fat finger ok");
+        }
+        BigDecimal delta = intent.price()
+                .subtract(intent.vwap())
+                .abs()
+                .divide(intent.vwap(), 12, RoundingMode.HALF_UP);
         return delta.compareTo(BigDecimal.valueOf(0.10)) > 0
                 ? new RiskResult.Breach("HIGH", "fat finger threshold exceeded")
                 : new RiskResult.Approved("fat finger ok");

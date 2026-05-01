@@ -70,6 +70,11 @@ public class IdentityService {
         return attempts > 5;
     }
 
+    /** Clears login attempt counters; for BDD and integration tests only. */
+    public void resetSecurityStateForTests() {
+        loginAttempts.clear();
+    }
+
     private String issueAccessToken(String username) {
         JwtClaimsSet claimsSet = JwtClaimsSet.builder()
                 .subject(username)

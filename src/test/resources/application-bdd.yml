@@ -1,0 +1,4 @@
+# Profile active during Cucumber runs; keeps Kafka bound to embedded brokers.
+spring:
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
