@@ -7,15 +7,14 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
+import com.trading.infra.chronicle.ChronicleAppenders;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MatchingEngineService {
+    private static final String MATCHING_CHRONICLE_PATH = "build/chronicle/matching";
+
     private final AtomicReference<OrderBook> bookRef = new AtomicReference<>(new OrderBook());
-    private final ExcerptAppender tradeOut =
-            ChronicleQueue.singleBuilder("build/chronicle/matching").build().acquireAppender();
 
     public TradeEvent match(InboundOrder incoming) {
         Thread.currentThread().setName("matching-core-cpu0");
@@ -24,7 +23,7 @@ public class MatchingEngineService {
             MatchResult result = snapshot.match(incoming);
             if (bookRef.compareAndSet(snapshot, result.nextBook())) {
                 if (result.trade() != null) {
-                    tradeOut.writeText(result.trade().toString());
+                    ChronicleAppenders.forPath(MATCHING_CHRONICLE_PATH).writeText(result.trade().toString());
                 }
                 return result.trade();
             }

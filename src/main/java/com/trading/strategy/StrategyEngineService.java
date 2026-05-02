@@ -6,17 +6,16 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.UUID;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
+import com.trading.infra.chronicle.ChronicleAppenders;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StrategyEngineService {
+    private static final String STRATEGY_CHRONICLE_PATH = "build/chronicle/strategy";
+
     private final MeanReversionStrategy strategy;
     private final KafkaTemplate<String, AlgoSignal> kafkaTemplate;
-    private final ExcerptAppender appender =
-            ChronicleQueue.singleBuilder("build/chronicle/strategy").build().acquireAppender();
     private final Counter signalCounter;
 
     public StrategyEngineService(KafkaTemplate<String, AlgoSignal> kafkaTemplate, MeterRegistry meterRegistry) {
@@ -30,7 +29,7 @@ public class StrategyEngineService {
         AlgoSignal signal = strategy.currentSignal();
         if (signal != null) {
             kafkaTemplate.send("algo-signals", signal.symbol(), signal);
-            appender.writeText(signal.toString());
+            ChronicleAppenders.forPath(STRATEGY_CHRONICLE_PATH).writeText(signal.toString());
             signalCounter.increment();
         }
     }

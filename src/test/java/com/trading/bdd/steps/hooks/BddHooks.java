@@ -7,7 +7,7 @@ import io.cucumber.java.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+
 public class BddHooks {
 
     private final OrderRepository orderRepository;

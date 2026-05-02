@@ -2,3 +2,8 @@
 spring:
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+  autoconfigure:
+    exclude:
+      # Wired explicitly by BddRedisContainerConfiguration (Testcontainers Redis).
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration

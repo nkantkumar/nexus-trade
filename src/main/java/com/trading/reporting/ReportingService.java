@@ -4,8 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
+import com.trading.infra.chronicle.ChronicleAppenders;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ReportingService {
+    private static final String REPORTING_CHRONICLE_PATH = "build/chronicle/reporting";
+
     private final List<DomainEvent> events = new ArrayList<>();
-    private final ExcerptAppender audit =
-            ChronicleQueue.singleBuilder("build/chronicle/reporting").build().acquireAppender();
 
     @KafkaListener(topics = {"order-events", "execution-events", "risk-events"}, groupId = "reporting")
     public void onDomainEvent(DomainEvent event) {
         events.add(event);
-        audit.writeText(event.toString());
+        ChronicleAppenders.forPath(REPORTING_CHRONICLE_PATH).writeText(event.toString());
     }
 
     @GetMapping("/reports/mifid")

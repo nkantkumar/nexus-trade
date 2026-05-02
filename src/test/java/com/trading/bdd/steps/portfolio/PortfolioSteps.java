@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@Component
+
 public class PortfolioSteps {
 
     @Autowired

@@ -5,17 +5,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
+import com.trading.infra.chronicle.ChronicleAppenders;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class ComplianceService {
+    private static final String COMPLIANCE_CHRONICLE_PATH = "build/chronicle/compliance";
+
     private final Map<String, Instant> largeOrders = new ConcurrentHashMap<>();
-    private final ExcerptAppender auditAppender =
-            ChronicleQueue.singleBuilder("build/chronicle/compliance").build().acquireAppender();
     private final RestClient restClient = RestClient.create("https://ofac.example");
 
     @KafkaListener(topics = "order-events", groupId = "compliance")
@@ -24,20 +23,20 @@ public class ComplianceService {
             largeOrders.put(event.orderId(), event.ts());
         }
         if ("CANCELLED".equals(event.state()) && isSpoofing(event)) {
-            auditAppender.writeText("SPOOFING_ALERT:" + event.orderId());
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("SPOOFING_ALERT:" + event.orderId());
         }
     }
 
     @KafkaListener(topics = "execution-events", groupId = "compliance")
     public void onExecution(ComplianceExecutionEvent event) {
         if (event.buyAccount().equals(event.sellAccount())) {
-            auditAppender.writeText("WASH_TRADE_ALERT:" + event.executionId());
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("WASH_TRADE_ALERT:" + event.executionId());
         }
         if (event.notional() > 1_000_000) {
-            auditAppender.writeText("AML_THRESHOLD_ALERT:" + event.executionId());
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("AML_THRESHOLD_ALERT:" + event.executionId());
         }
         if (isSanctioned(event.buyAccount()) || isSanctioned(event.sellAccount())) {
-            auditAppender.writeText("OFAC_ALERT:" + event.executionId());
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("OFAC_ALERT:" + event.executionId());
         }
     }
 

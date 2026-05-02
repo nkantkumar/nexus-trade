@@ -8,7 +8,7 @@ import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+
 public class IdentitySteps {
 
     private final IdentityService identityService;

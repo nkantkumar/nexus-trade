@@ -1,7 +1,7 @@
 package com.trading.bdd.config;
 
 import com.trading.NexusTradeApplication;
-import com.trading.bdd.support.BddRedisMockConfiguration;
+import com.trading.bdd.support.BddRedisContainerConfiguration;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,5 +14,5 @@ import org.springframework.test.context.ActiveProfiles;
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles({"bdd", "test"})
 @EmbeddedKafka(partitions = 1, topics = {"order-events", "execution-events", "notifications"})
-@Import(BddRedisMockConfiguration.class)
+@Import(BddRedisContainerConfiguration.class)
 public class CucumberSpringConfiguration {}
