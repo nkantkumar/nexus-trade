@@ -1,33 +1,40 @@
 package com.trading.matching;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 public class PerformanceMetrics {
+
     private final LongAdder totalOrders = new LongAdder();
     private final LongAdder totalTrades = new LongAdder();
     private final LongAdder totalLatencyNs = new LongAdder();
-    private final LongAdder peakLatencyNs = new LongAdder();
+    private final AtomicLong peakLatencyNs = new AtomicLong();
 
     public void recordOrder(long latencyNs) {
         totalOrders.increment();
         totalLatencyNs.add(latencyNs);
 
-        // Update peak
-        long currentPeak = peakLatencyNs.longValue();
-        while (latencyNs > currentPeak) {
-            if (peakLatencyNs.compareAndSet(currentPeak, latencyNs)) {
-                break;
-            }
-            currentPeak = peakLatencyNs.longValue();
+        long currentPeak = peakLatencyNs.get();
+        while (latencyNs > currentPeak && !peakLatencyNs.compareAndSet(currentPeak, latencyNs)) {
+            currentPeak = peakLatencyNs.get();
         }
     }
 
-    public double getAverageLatencyMicros() {
-        return (totalLatencyNs.doubleValue() / totalOrders.doubleValue()) / 1000.0;
+    public void recordTrade() {
+        totalTrades.increment();
     }
 
-    // Throughput in orders per second
-    public double getThroughput() {
-        return totalOrders.doubleValue() * 1_000_000_000.0 / totalLatencyNs.doubleValue();
+    public double getAverageLatencyMicros() {
+        long n = totalOrders.sum();
+        return n == 0 ? 0.0 : (totalLatencyNs.doubleValue() / n) / 1000.0;
+    }
+
+    public double getThroughputOrdersPerSecond() {
+        long sumNs = totalLatencyNs.sum();
+        return sumNs == 0 ? 0.0 : totalOrders.doubleValue() * 1_000_000_000.0 / sumNs;
+    }
+
+    public long getPeakLatencyNanos() {
+        return peakLatencyNs.get();
     }
 }

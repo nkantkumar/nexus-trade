@@ -1,35 +1,46 @@
 package com.trading.matching;
 
-import io.netty.util.internal.ObjectPool;
+import java.util.concurrent.ArrayBlockingQueue;
 
-// Using flyweight pattern and object pooling
-public class OrderFlyweight {
-    private static final ObjectPool<OrderEntry> orderPool =
-            new ObjectPool<>(1024);
+/** Tiny pooled mutable entry for hot-path prototypes — avoids Netty-internal pooling APIs. */
+public final class OrderFlyweight {
 
-    public static class OrderEntry {
+    private final ArrayBlockingQueue<OrderEntry> pool;
+
+    public OrderFlyweight(int poolSize) {
+        this.pool = new ArrayBlockingQueue<>(Math.max(16, poolSize));
+        for (int i = 0; i < Math.min(poolSize, 1024); i++) {
+            pool.offer(new OrderEntry());
+        }
+    }
+
+    public static final class OrderEntry {
         long orderId;
         long timestamp;
-        byte side; // 0 = BUY, 1 = SELL
-        int price; // Using integer for fixed-point
+        byte side;
+        int priceTicks;
         int quantity;
         int filledQuantity;
         byte status;
 
-        public void reset() {
+        void reset() {
             orderId = 0;
             timestamp = 0;
             side = 0;
-            price = 0;
+            priceTicks = 0;
             quantity = 0;
             filledQuantity = 0;
             status = 0;
         }
     }
 
-    public OrderEntry createOrder(/* parameters */) {
-        OrderEntry order = orderPool.acquire();
-        // Initialize fields
-        return order;
+    public OrderEntry acquire() {
+        OrderEntry e = pool.poll();
+        return e != null ? e : new OrderEntry();
+    }
+
+    public void release(OrderEntry entry) {
+        entry.reset();
+        pool.offer(entry);
     }
 }
