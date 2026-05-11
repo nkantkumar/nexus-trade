@@ -87,5 +87,5 @@ class MeanReversionStrategy extends Strategy {
 }
 
 record MarketDataEvent(String symbol, double price, long size) {}
-record ExecutionEvent(String orderId, long filledQty, double avgPrice) {}
+ record ExecutionEvent(String orderId, long filledQty, double avgPrice) {}
 record AlgoSignal(String id, String symbol, String side, long qty, Instant ts) {}

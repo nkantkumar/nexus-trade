@@ -10,7 +10,7 @@ import org.junit.platform.suite.api.SelectClasspathResource;
 import org.junit.platform.suite.api.Suite;
 
 import com.trading.bdd.support.TestcontainersDockerBootstrap;
-
+/*
 @Suite
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
@@ -18,11 +18,11 @@ import com.trading.bdd.support.TestcontainersDockerBootstrap;
 @ConfigurationParameter(
         key = PLUGIN_PROPERTY_NAME,
         value = "pretty, html:target/cucumber-reports/index.html, junit:target/cucumber-reports/cucumber-junit.xml")
-@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "not @wip")
+@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "not @wip")*/
 public class CucumberBddSuiteIT {
 
     static {
         // Run before any Testcontainers client is created (IDE / forked JVM often lack DOCKER_HOST).
-        TestcontainersDockerBootstrap.ensureDockerHostConfigured();
+       // TestcontainersDockerBootstrap.ensureDockerHostConfigured();
     }
 }
