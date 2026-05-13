@@ -1,9 +1,5 @@
 package com.trading.risk;
 
-package com.trading.risk.application;
-
-import com.trading.risk.core.*;
-import com.trading.risk.model.*;
 
 /**
  * Complete application setup with all dependencies properly wired

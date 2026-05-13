@@ -1,6 +1,6 @@
 package com.trading.risk;
 
-package com.trading.risk.model;
+
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -201,57 +201,6 @@ public class RiskAlert {
     public int hashCode() {
         return alertId.hashCode();
     }
-}
-
-/**
- * Risk Alert Severity Levels
- */
-public enum RiskAlertSeverity {
-    LOW(1, "Low"),
-    MEDIUM(2, "Medium"),
-    HIGH(3, "High"),
-    CRITICAL(4, "Critical");
-
-    private final int level;
-    private final String displayName;
-
-    RiskAlertSeverity(int level, String displayName) {
-        this.level = level;
-        this.displayName = displayName;
-    }
-
-    public int getLevel() { return level; }
-    public String getDisplayName() { return displayName; }
-
-    public boolean isGreaterThan(RiskAlertSeverity other) {
-        return this.level > other.level;
-    }
-
-    public boolean isLessThan(RiskAlertSeverity other) {
-        return this.level < other.level;
-    }
-}
-
-/**
- * Risk Alert Status
- */
-public enum RiskAlertStatus {
-    ACTIVE("Active", "Alert has been triggered and not yet addressed"),
-    ACKNOWLEDGED("Acknowledged", "Alert has been seen but not resolved"),
-    RESOLVED("Resolved", "Alert has been resolved"),
-    ESCALATED("Escalated", "Alert has been escalated to higher authority"),
-    IGNORED("Ignored", "Alert has been marked as false positive");
-
-    private final String displayName;
-    private final String description;
-
-    RiskAlertStatus(String displayName, String description) {
-        this.displayName = displayName;
-        this.description = description;
-    }
-
-    public String getDisplayName() { return displayName; }
-    public String getDescription() { return description; }
 }
 
 /**

@@ -58,28 +58,7 @@ public class RiskEngine {
     }
 
     private void initializeValidators() {
-        // Pre-trade validators (in priority order - lower number = higher priority)
-        preTradeValidators.add(new DuplicateOrderValidator());        // Priority 1
-        preTradeValidators.add(new RateLimitValidator());              // Priority 2
-        preTradeValidators.add(new FatFingerValidator(marketDataProvider)); // Priority 5
-        preTradeValidators.add(new SymbolRestrictionValidator());      // Priority 15
-        preTradeValidators.add(new TradingHoursValidator());           // Priority 25
-        preTradeValidators.add(new PositionLimitValidator());          // Priority 10
-        preTradeValidators.add(new ExposureValidator());               // Priority 20
 
-        // Validators that need dependencies - now properly injected
-        MarginValidator marginValidator = new MarginValidator(marginManager, marketDataProvider);
-        CreditValidator creditValidator = new CreditValidator(creditManager);
-
-        preTradeValidators.add(marginValidator);   // Priority 30
-        preTradeValidators.add(creditValidator);   // Priority 40
-
-        // Sort by priority
-        preTradeValidators.sort(Comparator.comparingInt(RiskValidator::getPriority));
-
-        // Post-trade validators
-        PostTradeRiskValidator postTradeValidator = new PostTradeRiskValidator(marketDataProvider);
-        postTradeValidators.add(postTradeValidator);
     }
 
     public void disableTrading(String accountId) {

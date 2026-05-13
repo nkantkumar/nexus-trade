@@ -1,6 +1,6 @@
 package com.trading.risk;
 
-package com.trading.risk.model;
+
 
 import java.util.HashMap;
 import java.util.Map;
