@@ -1,10 +1,5 @@
 package com.trading.risk;
 
-
-
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,8 +7,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Account positions and risk limits
  */
-@Getter
-@Setter
 public class RiskAccount {
     private final String accountId;
     private final String accountName;
@@ -47,7 +40,6 @@ public class RiskAccount {
         this.productLimits = new ConcurrentHashMap<>();
     }
 
-
     public void addPosition(Position position) {
         positions.put(position.getSymbol(), position);
         recalculateExposure();
@@ -71,6 +63,35 @@ public class RiskAccount {
         netExposure.set(net);
     }
 
+    // Manual Getters and Setters to avoid Lombok dependency
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public String getAccountName() {
+        return accountName;
+    }
+
+    public AccountType getAccountType() {
+        return accountType;
+    }
+
+    public Map<String, Position> getPositions() {
+        return positions;
+    }
+
+    public Map<String, ProductLimit> getProductLimits() {
+        return productLimits;
+    }
+
+    public long getPositionLimit() {
+        return positionLimit;
+    }
+
+    public void setPositionLimit(long positionLimit) {
+        this.positionLimit = positionLimit;
+    }
+
     public void setGrossExposureLimit(int grossExposureLimit) {
         this.grossExposureLimit = grossExposureLimit;
     }
@@ -79,6 +100,73 @@ public class RiskAccount {
         return Math.toIntExact(grossExposureLimit);
     }
 
+    public long getNetExposureLimit() {
+        return netExposureLimit;
+    }
+
+    public void setNetExposureLimit(long netExposureLimit) {
+        this.netExposureLimit = netExposureLimit;
+    }
+
+    public double getMaxOrderValue() {
+        return maxOrderValue;
+    }
+
+    public void setMaxOrderValue(double maxOrderValue) {
+        this.maxOrderValue = maxOrderValue;
+    }
+
+    public int getMaxOrderQuantity() {
+        return maxOrderQuantity;
+    }
+
+    public void setMaxOrderQuantity(int maxOrderQuantity) {
+        this.maxOrderQuantity = maxOrderQuantity;
+    }
+
+    public double getCreditLimit() {
+        return creditLimit;
+    }
+
+    public void setCreditLimit(double creditLimit) {
+        this.creditLimit = creditLimit;
+    }
+
+    public double getUsedCredit() {
+        return usedCredit;
+    }
+
+    public void setUsedCredit(double usedCredit) {
+        this.usedCredit = usedCredit;
+    }
+
+    public double getMaintenanceMargin() {
+        return maintenanceMargin;
+    }
+
+    public void setMaintenanceMargin(double maintenanceMargin) {
+        this.maintenanceMargin = maintenanceMargin;
+    }
+
+    public double getInitialMargin() {
+        return initialMargin;
+    }
+
+    public void setInitialMargin(double initialMargin) {
+        this.initialMargin = initialMargin;
+    }
+
+    public AtomicLong getGrossExposure() {
+        return grossExposure;
+    }
+
+    public AtomicLong getNetExposure() {
+        return netExposure;
+    }
+
+    public AtomicLong getTotalOpenPnl() {
+        return totalOpenPnl;
+    }
 }
 
 

@@ -8,7 +8,7 @@ public class ExposureValidator implements RiskValidator {
 
     @Override
     public RiskCheckResult validate(OrderRequest order, RiskAccount account, RiskContext context) {
-        long currentGross = account.getGrossExposure();
+        long currentGross = account.getGrossExposure().get();
         long orderValue = order.getQuantity() * (long)(order.getPrice() * 10000);
         long newGross = currentGross + orderValue;
 

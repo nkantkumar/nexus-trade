@@ -1,8 +1,5 @@
 package com.trading.matching;
 
-import lombok.Getter;
-
-@Getter
 public class Order {
 
     private final String orderId;
@@ -53,4 +50,13 @@ public class Order {
             this.status = OrderStatus.PARTIALLY_FILLED;
         }
     }
+
+    // Manual Getters
+    public String getOrderId() { return orderId; }
+    public String getSymbol() { return symbol; }
+    public long getTimestamp() { return timestamp; }
+    public Side getSide() { return side; }
+    public double getPrice() { return price; }
+    public long getQuantity() { return quantity; }
+    public OrderStatus getStatus() { return status; }
 }

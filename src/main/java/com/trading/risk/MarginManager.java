@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class MarginManager {
     private final Map<String, MarginRequirements> productMargins;
-    private final Map<String, AccountMargin> accountMargins;
+
     private final MarketDataProvider marketDataProvider;
 
     // Default margin rates
@@ -17,7 +17,7 @@ public class MarginManager {
 
     public MarginManager() {
         this.productMargins = new ConcurrentHashMap<>();
-        this.accountMargins = new ConcurrentHashMap<>();
+
         this.marketDataProvider = new MarketDataProvider();
 
         // Initialize default margins for common products
@@ -26,7 +26,7 @@ public class MarginManager {
 
     public MarginManager(MarketDataProvider marketDataProvider) {
         this.productMargins = new ConcurrentHashMap<>();
-        this.accountMargins = new ConcurrentHashMap<>();
+
         this.marketDataProvider = marketDataProvider;
         initializeDefaultMargins();
     }

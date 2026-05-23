@@ -62,10 +62,6 @@ public class RiskEngineExample {
         // Update market prices for mark-to-market
         Map<String, Double> prices = new HashMap<>();
         prices.put("AAPL", 155.50);
-        riskEngine.updateMarketPrices(prices);
-
-        // Check margin calls
-        riskEngine.checkMarginCalls();
 
         // Print metrics
         RiskMetrics metrics = riskEngine.getMetricsCollector().getLatestMetrics();

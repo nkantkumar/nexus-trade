@@ -32,7 +32,7 @@ public class PositionLimitValidator implements RiskValidator {
         // Check net position limits for the account
         long netLimit = account.getNetExposureLimit();
         if (netLimit > 0) {
-            long currentNet = account.getNetExposure();
+            long currentNet = account.getNetExposure().get();
             long orderValue = order.getQuantity() * (long)(order.getPrice() * 10000);
             long newNet = order.getSide() == OrderSide.BUY ? currentNet + orderValue : currentNet - orderValue;
 

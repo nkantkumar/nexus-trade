@@ -9,7 +9,7 @@ import java.util.concurrent.*;
  * This is critical for detecting risk limit breaches in real-time
  */
 public class PostTradeRiskValidator implements RiskValidator {
-    private static final Logger logger = null;//LoggerFactory.getLogger(PostTradeRiskValidator.class);
+    private static final Logger logger = Logger.getLogger(PostTradeRiskValidator.class);
 
     // Post-trade specific limits
     private final Map<String, PostTradeLimits> accountLimits = new ConcurrentHashMap<>();
@@ -595,13 +595,15 @@ class HistoricalTrade {
  * Logger interface (simplified)
  */
 class Logger {
-    public static LoggerFactory getLogger(Class<?> clazz) {
-        return new LoggerFactory();
+    public static Logger getLogger(Class<?> clazz) {
+        return new Logger();
     }
-}
-
-class LoggerFactory {
     public void warn(String message, Object... args) {
-        System.out.printf("[WARN] " + message + "%n", args);
+        try {
+            String formatted = message.replace("{}", "%s");
+            System.out.printf("[WARN] " + formatted + "%n", args);
+        } catch (Exception e) {
+            System.out.println("[WARN] " + message);
+        }
     }
 }

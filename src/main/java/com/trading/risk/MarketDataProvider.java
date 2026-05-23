@@ -93,7 +93,7 @@ public class MarketDataProvider {
      */
     public void updateMarketData(String symbol, double price, double volume) {
         MarketData data = marketDataMap.computeIfAbsent(symbol, k -> new MarketData(symbol));
-        data.update(price, volume);
+        data.update(price, (long) volume);
 
         // Update volatility based on price movement
         updateVolatility(symbol, price);

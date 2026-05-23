@@ -14,12 +14,10 @@ public class Position {
     private volatile double averagePrice;
     private volatile double currentPrice;
     private volatile double realizedPnl;
-    private final List<PositionLeg> legs;     // For spread positions
 
     public Position(String symbol, String accountId) {
         this.symbol = symbol;
         this.accountId = accountId;
-        this.legs = new ArrayList<>();
     }
 
     public void update(long deltaQuantity, double price) {

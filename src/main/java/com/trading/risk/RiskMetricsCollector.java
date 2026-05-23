@@ -13,7 +13,7 @@ public class RiskMetricsCollector {
     private final LongAdder passedChecks = new LongAdder();
     private final LongAdder failedChecks = new LongAdder();
     private final LongAdder totalLatencyNs = new LongAdder();
-    private final LongAdder peakLatencyNs = new LongAdder();
+    private final AtomicLong peakLatencyNs = new AtomicLong(0);
     private final Map<RiskCheckType, LongAdder> failuresByType = new ConcurrentHashMap<>();
 
     private final AtomicInteger activeAlertCount = new AtomicInteger(0);
@@ -38,12 +38,12 @@ public class RiskMetricsCollector {
         }
 
         // Update peak latency
-        long currentPeak = peakLatencyNs.longValue();
+        long currentPeak = peakLatencyNs.get();
         while (latencyNs > currentPeak) {
             if (peakLatencyNs.compareAndSet(currentPeak, latencyNs)) {
                 break;
             }
-            currentPeak = peakLatencyNs.longValue();
+            currentPeak = peakLatencyNs.get();
         }
     }
 
@@ -109,7 +109,7 @@ public class RiskMetricsCollector {
         passedChecks.reset();
         failedChecks.reset();
         totalLatencyNs.reset();
-        peakLatencyNs.reset();
+        peakLatencyNs.set(0L);
         for (LongAdder adder : failuresByType.values()) {
             adder.reset();
         }
