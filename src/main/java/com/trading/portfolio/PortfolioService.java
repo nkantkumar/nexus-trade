@@ -5,15 +5,18 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class PortfolioService {
-    private final Map<String, Position> positions = new HashMap<>();
+    private final Map<String, Position> positions = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Double>> currencyBalances = new ConcurrentHashMap<>();
     private final StringRedisTemplate redisTemplate;
 
     public PortfolioService(StringRedisTemplate redisTemplate) {
@@ -27,15 +30,40 @@ public class PortfolioService {
         redisTemplate.opsForValue().set("portfolio:" + event.accountId() + ":" + event.symbol(), String.valueOf(p.netQty));
     }
 
+    @KafkaListener(topics = "fx-trade-events", groupId = "portfolio")
+    public void onFxTrade(Map<String, Object> fxTradeEvent) {
+        String accountId = (String) fxTradeEvent.getOrDefault("accountId", "DEFAULT_ACCOUNT");
+        String baseCurrency = (String) fxTradeEvent.getOrDefault("baseCurrency", "EUR");
+        String quoteCurrency = (String) fxTradeEvent.getOrDefault("quoteCurrency", "USD");
+        double units = Double.parseDouble(fxTradeEvent.getOrDefault("units", "100000").toString());
+        double allInRate = Double.parseDouble(fxTradeEvent.getOrDefault("allInRate", "1.0850").toString());
+        String side = (String) fxTradeEvent.getOrDefault("side", "BUY");
+
+        Map<String, Double> balances = currencyBalances.computeIfAbsent(accountId, k -> new ConcurrentHashMap<>());
+        if ("BUY".equalsIgnoreCase(side)) {
+            balances.put(baseCurrency, balances.getOrDefault(baseCurrency, 0.0) + units);
+            balances.put(quoteCurrency, balances.getOrDefault(quoteCurrency, 0.0) - (units * allInRate));
+        } else {
+            balances.put(baseCurrency, balances.getOrDefault(baseCurrency, 0.0) - units);
+            balances.put(quoteCurrency, balances.getOrDefault(quoteCurrency, 0.0) + (units * allInRate));
+        }
+    }
+
     @GetMapping("/portfolio/{symbol}")
     public PortfolioSnapshot snapshot(@PathVariable String symbol) {
         Position p = positions.getOrDefault(symbol, new Position());
         return new PortfolioSnapshot(symbol, p.netQty, p.realizedPnl(), p.unrealizedPnl(), p.sharpeRatio(), p.maxDrawdown(), p.var95());
     }
 
+    @GetMapping("/portfolio/fx/balances/{accountId}")
+    public Map<String, Double> getFxBalances(@PathVariable String accountId) {
+        return currencyBalances.getOrDefault(accountId, Map.of("USD", 1_000_000.0, "EUR", 500_000.0, "JPY", 50_000_000.0));
+    }
+
     /** Clears in-memory positions; for BDD and integration tests only. */
     public void resetForTests() {
         positions.clear();
+        currencyBalances.clear();
     }
 }
 
@@ -75,3 +103,4 @@ final class Position {
         return Math.abs(sorted.get(idx));
     }
 }
+

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,17 @@ public class ExecutionRouterService {
                 new ChildOrder(UUID.randomUUID().toString(), intent.symbol(), intent.quantity() - sliceQty, intent.limitPrice(), "VWAP"));
     }
 
+    /**
+     * Smart Order Routing (SOR) for FX trades selecting optimal bank Liquidity Provider (LP).
+     */
+    public Venue selectBestFxVenue(String currencyPair, BigDecimal desiredRate, String side) {
+        List<Venue> fxVenues = venueRegistry.fxVenues();
+        return fxVenues.stream()
+                .min(Comparator.comparing((Venue v) -> v.price().subtract(desiredRate).abs())
+                        .thenComparing(v -> BigDecimal.valueOf(v.latencyScore() + (1.0 - v.fillRateScore()))))
+                .orElse(fxVenues.get(0));
+    }
+
     public Venue selectBestVenue(List<Venue> venues, BigDecimal bestPrice) {
         return venues.stream()
                 .min(Comparator.comparing((Venue v) -> v.price().subtract(bestPrice).abs())
@@ -36,7 +46,9 @@ public class ExecutionRouterService {
     }
 
     public void routeFIX(ChildOrder childOrder) {
-        Venue venue = selectBestVenue(venueRegistry.all(), childOrder.limitPrice());
+        Venue venue = childOrder.symbol().length() == 6 ?
+                selectBestFxVenue(childOrder.symbol(), childOrder.limitPrice(), "BUY") :
+                selectBestVenue(venueRegistry.all(), childOrder.limitPrice());
         Message message = new Message();
         try {
             Session.sendToTarget(message, venue.sessionId());
@@ -61,4 +73,12 @@ class VenueRegistry {
                 new Venue("VENUE_A", "FIX-A", BigDecimal.valueOf(101.10), 0.9, 0.94),
                 new Venue("VENUE_B", "FIX-B", BigDecimal.valueOf(101.05), 0.8, 0.90));
     }
+
+    List<Venue> fxVenues() {
+        return List.of(
+                new Venue("EBS_LP", "FIX-EBS", BigDecimal.valueOf(1.0851), 0.95, 0.98),
+                new Venue("CURRENEX_LP", "FIX-CURRENEX", BigDecimal.valueOf(1.0850), 0.92, 0.96),
+                new Venue("HOTSPOT_FX", "FIX-HOTSPOT", BigDecimal.valueOf(1.0852), 0.90, 0.95));
+    }
 }
+

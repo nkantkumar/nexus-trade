@@ -3,6 +3,8 @@ package com.trading.reporting;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import com.trading.infra.chronicle.ChronicleAppenders;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,6 +18,7 @@ public class ReportingService {
     private static final String REPORTING_CHRONICLE_PATH = "build/chronicle/reporting";
 
     private final List<DomainEvent> events = new ArrayList<>();
+    private final List<FxEmirReportEntry> fxEmirReports = new ArrayList<>();
 
     @KafkaListener(topics = {"order-events", "execution-events", "risk-events"}, groupId = "reporting")
     public void onDomainEvent(DomainEvent event) {
@@ -23,10 +26,31 @@ public class ReportingService {
         ChronicleAppenders.forPath(REPORTING_CHRONICLE_PATH).writeText(event.toString());
     }
 
+    @KafkaListener(topics = "fx-trade-events", groupId = "reporting")
+    public void onFxTrade(Map<String, Object> fxTrade) {
+        String tradeId = (String) fxTrade.getOrDefault("tradeId", "FX-" + UUID.randomUUID().toString().substring(0, 8));
+        String uti = "UTI-FX-" + UUID.randomUUID().toString();
+        String symbol = (String) fxTrade.getOrDefault("symbol", "EURUSD");
+        String side = (String) fxTrade.getOrDefault("side", "BUY");
+        double lots = Double.parseDouble(fxTrade.getOrDefault("lots", "1.0").toString());
+        double rate = Double.parseDouble(fxTrade.getOrDefault("allInRate", "1.0850").toString());
+
+        FxEmirReportEntry entry = new FxEmirReportEntry(uti, tradeId, symbol, side, lots, rate, Instant.now());
+        fxEmirReports.add(entry);
+        ChronicleAppenders.forPath(REPORTING_CHRONICLE_PATH).writeText("FX_EMIR_REPORT:" + uti);
+    }
+
     @GetMapping("/reports/mifid")
     public String mifidCsv() {
         return "event_id,event_type,timestamp\n" + events.stream()
                 .map(e -> e.id() + "," + e.type() + "," + e.ts())
+                .collect(Collectors.joining("\n"));
+    }
+
+    @GetMapping("/reports/fx-emir")
+    public String fxEmirCsv() {
+        return "uti,trade_id,symbol,side,lots,rate,timestamp\n" + fxEmirReports.stream()
+                .map(r -> r.uti() + "," + r.tradeId() + "," + r.symbol() + "," + r.side() + "," + r.lots() + "," + r.rate() + "," + r.timestamp())
                 .collect(Collectors.joining("\n"));
     }
 
@@ -43,3 +67,5 @@ public class ReportingService {
 }
 
 record DomainEvent(String id, String type, Instant ts, String payload) {}
+record FxEmirReportEntry(String uti, String tradeId, String symbol, String side, double lots, double rate, Instant timestamp) {}
+

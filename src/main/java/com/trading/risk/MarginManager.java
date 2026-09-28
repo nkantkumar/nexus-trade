@@ -234,7 +234,14 @@ public class MarginManager {
     }
 
     private String getProductType(String symbol) {
-        // Would determine product type from symbol
+        if (symbol == null) return "STOCK";
+        String clean = symbol.replace("/", "").toUpperCase();
+        if (clean.equals("EURUSD") || clean.equals("USDJPY") || clean.equals("GBPUSD") || clean.equals("AUDUSD") || clean.equals("USDCHF") || clean.equals("USDCAD")) {
+            return "FOREX_MAJOR";
+        }
+        if (clean.equals("EURGBP") || clean.equals("EURJPY") || clean.equals("GBPJPY") || clean.startsWith("FX_")) {
+            return "FOREX_MINOR";
+        }
         if (symbol.startsWith("0")) return "OPTION";
         if (symbol.endsWith("FUT")) return "FUTURE";
         if (symbol.matches(".*[A-Z]{3}.*")) return "STOCK";

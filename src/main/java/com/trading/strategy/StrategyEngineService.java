@@ -15,21 +15,33 @@ public class StrategyEngineService {
     private static final String STRATEGY_CHRONICLE_PATH = "build/chronicle/strategy";
 
     private final MeanReversionStrategy strategy;
+    private final TriangularArbitrageStrategy fxTriangularStrategy;
     private final KafkaTemplate<String, AlgoSignal> kafkaTemplate;
     private final Counter signalCounter;
 
     public StrategyEngineService(KafkaTemplate<String, AlgoSignal> kafkaTemplate, MeterRegistry meterRegistry) {
         this.kafkaTemplate = kafkaTemplate;
         this.strategy = new MeanReversionStrategy();
+        this.fxTriangularStrategy = new TriangularArbitrageStrategy();
         this.signalCounter = meterRegistry.counter("algo.signal.count");
     }
 
     public void onMarketData(MarketDataEvent event) {
         strategy.onMarketData(event);
+        fxTriangularStrategy.updateMarketPrice(event.symbol(), event.price());
+
         AlgoSignal signal = strategy.currentSignal();
         if (signal != null) {
             kafkaTemplate.send("algo-signals", signal.symbol(), signal);
             ChronicleAppenders.forPath(STRATEGY_CHRONICLE_PATH).writeText(signal.toString());
+            signalCounter.increment();
+        }
+
+        // Evaluate FX Triangular Arbitrage if FX ticks received
+        AlgoSignal arbSignal = fxTriangularStrategy.evaluateArbitrage("EURUSD", "USDJPY", "EURJPY");
+        if (arbSignal != null) {
+            kafkaTemplate.send("algo-signals", arbSignal.symbol(), arbSignal);
+            ChronicleAppenders.forPath(STRATEGY_CHRONICLE_PATH).writeText("FX_TRIANGULAR_ARB_SIGNAL:" + arbSignal);
             signalCounter.increment();
         }
     }
@@ -87,5 +99,6 @@ class MeanReversionStrategy extends Strategy {
 }
 
 record MarketDataEvent(String symbol, double price, long size) {}
- record ExecutionEvent(String orderId, long filledQty, double avgPrice) {}
+record ExecutionEvent(String orderId, long filledQty, double avgPrice) {}
 record AlgoSignal(String id, String symbol, String side, long qty, Instant ts) {}
+

@@ -40,6 +40,22 @@ public class ComplianceService {
         }
     }
 
+    @KafkaListener(topics = "fx-trade-events", groupId = "compliance")
+    public void onFxTrade(Map<String, Object> fxTradeEvent) {
+        String tradeId = (String) fxTradeEvent.getOrDefault("tradeId", "FX-TRD");
+        String accountId = (String) fxTradeEvent.getOrDefault("accountId", "UNKNOWN");
+        double lots = Double.parseDouble(fxTradeEvent.getOrDefault("lots", "1.0").toString());
+        double allInRate = Double.parseDouble(fxTradeEvent.getOrDefault("allInRate", "1.0").toString());
+
+        double notional = lots * 100_000 * allInRate;
+        if (notional > 5_000_000) {
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("FX_LARGE_NOTIONAL_ALERT:" + tradeId);
+        }
+        if (isSanctioned(accountId)) {
+            ChronicleAppenders.forPath(COMPLIANCE_CHRONICLE_PATH).writeText("FX_SANCTIONED_ACCOUNT_ALERT:" + tradeId);
+        }
+    }
+
     private boolean isSpoofing(ComplianceOrderEvent event) {
         Instant placedAt = largeOrders.get(event.orderId());
         return placedAt != null && Duration.between(placedAt, event.ts()).toSeconds() < 60;
@@ -58,3 +74,4 @@ public class ComplianceService {
 
 record ComplianceOrderEvent(String orderId, String state, long quantity, Instant ts) {}
 record ComplianceExecutionEvent(String executionId, String buyAccount, String sellAccount, double notional) {}
+

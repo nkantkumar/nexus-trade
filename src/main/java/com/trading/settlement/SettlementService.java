@@ -13,6 +13,7 @@ import com.trading.settlement.dvp.SettlementInstruction;
 import com.trading.settlement.equities.CorporateAction;
 import com.trading.settlement.equities.CorporateActionAdjuster;
 import com.trading.settlement.equities.EquityFailManagementEngine;
+import com.trading.settlement.fx.PvpSettlementEngine;
 import com.trading.settlement.reconciliation.CustodianRecord;
 import com.trading.settlement.reconciliation.CustodianReconciliationService;
 import com.trading.settlement.reconciliation.ReconciliationReport;
@@ -28,9 +29,9 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- * Enterprise Securities Post-Trade, Clearing & Settlement Orchestrator.
+ * Enterprise Securities & FX Post-Trade, Clearing & Settlement Orchestrator.
  * Connects Aeron Low-Latency Trade Streams, Block Trade Allocations, CCP Multilateral Netting,
- * DvP Settlement State Machine, Corporate Action Adjustments, and Custodian Reconciliations.
+ * DvP Settlement State Machine, FX PvP CLS Engine, Corporate Action Adjustments, and Custodian Reconciliations.
  */
 @Service
 public class SettlementService {
@@ -40,10 +41,24 @@ public class SettlementService {
     private final BlockTradeAllocationEngine allocationEngine;
     private final CcpClearingEngine clearingEngine;
     private final DvpSettlementEngine dvpEngine;
+    private final PvpSettlementEngine pvpEngine;
     private final CorporateActionAdjuster corporateActionAdjuster;
     private final EquityFailManagementEngine failManagementEngine;
     private final CustodianReconciliationService reconciliationService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public SettlementService(
+            EquityTradeCaptureService tradeCaptureService,
+            BlockTradeAllocationEngine allocationEngine,
+            CcpClearingEngine clearingEngine,
+            DvpSettlementEngine dvpEngine,
+            CorporateActionAdjuster corporateActionAdjuster,
+            EquityFailManagementEngine failManagementEngine,
+            CustodianReconciliationService reconciliationService,
+            KafkaTemplate<String, Object> kafkaTemplate
+    ) {
+        this(tradeCaptureService, allocationEngine, clearingEngine, dvpEngine, new PvpSettlementEngine(), corporateActionAdjuster, failManagementEngine, reconciliationService, kafkaTemplate);
+    }
 
     @Autowired
     public SettlementService(
@@ -51,6 +66,7 @@ public class SettlementService {
             BlockTradeAllocationEngine allocationEngine,
             CcpClearingEngine clearingEngine,
             DvpSettlementEngine dvpEngine,
+            @Autowired(required = false) PvpSettlementEngine pvpEngine,
             CorporateActionAdjuster corporateActionAdjuster,
             EquityFailManagementEngine failManagementEngine,
             CustodianReconciliationService reconciliationService,
@@ -60,6 +76,7 @@ public class SettlementService {
         this.allocationEngine = allocationEngine;
         this.clearingEngine = clearingEngine;
         this.dvpEngine = dvpEngine;
+        this.pvpEngine = pvpEngine != null ? pvpEngine : new PvpSettlementEngine();
         this.corporateActionAdjuster = corporateActionAdjuster;
         this.failManagementEngine = failManagementEngine;
         this.reconciliationService = reconciliationService;
@@ -101,6 +118,16 @@ public class SettlementService {
         return dvpEngine.processDvPSettlement(instructionId);
     }
 
+    public boolean initiateAndProcessFxPvPSettlement(
+            String tradeId, String buyerAccountId, String sellerAccountId,
+            String baseCurrency, double baseAmount, String quoteCurrency, double quoteAmount, LocalDate valueDate
+    ) {
+        var instruction = pvpEngine.createPvPInstruction(
+                tradeId, buyerAccountId, sellerAccountId, baseCurrency, baseAmount, quoteCurrency, quoteAmount, valueDate
+        );
+        return pvpEngine.executePvPSettlement(instruction.instructionId());
+    }
+
     public List<CorporateActionAdjuster.AdjustedInstruction> processCorporateAction(CorporateAction action, List<SettlementInstruction> pending) {
         return corporateActionAdjuster.applyCorporateAction(action, pending);
     }
@@ -117,6 +144,10 @@ public class SettlementService {
         return dvpEngine;
     }
 
+    public PvpSettlementEngine getPvpEngine() {
+        return pvpEngine;
+    }
+
     public CcpClearingEngine getClearingEngine() {
         return clearingEngine;
     }
@@ -130,3 +161,4 @@ public class SettlementService {
         log.info("Running scheduled custodian reconciliation job...");
     }
 }
+
