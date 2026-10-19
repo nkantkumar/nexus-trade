@@ -12,11 +12,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
-import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -64,7 +65,17 @@ public class SecurityConfig {
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:http://localhost:8080/realms/nexus-trade/protocol/openid-connect/certs}") String jwkSetUri,
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:http://localhost:8080/realms/nexus-trade}") String issuerUri) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        OAuth2TokenValidator<Jwt> withIssuer = token -> {
+            if (token.getIssuer() != null) {
+                String iss = token.getIssuer().toString();
+                if (iss.equals(issuerUri) ||
+                        iss.equals("http://localhost:8080/realms/nexus-trade") ||
+                        iss.equals("http://keycloak:8080/realms/nexus-trade")) {
+                    return OAuth2TokenValidatorResult.success();
+                }
+            }
+            return OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "Invalid issuer: " + token.getIssuer(), null));
+        };
         OAuth2TokenValidator<Jwt> withTimestamp = new JwtTimestampValidator();
         jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(withIssuer, withTimestamp));
         return jwtDecoder;
