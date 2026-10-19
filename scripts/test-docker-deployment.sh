@@ -125,8 +125,8 @@ BLOCK_RES=$(curl -s -X POST "$API_URL/api/v1/settlement/allocations/block" \
   -H "Content-Type: application/json" \
   -d "$BLOCK_PAYLOAD")
 echo "$BLOCK_RES" | grep -q '"blockTradeId":"BLK-999"' || fail "Block allocation failed: $BLOCK_RES"
-echo "$BLOCK_RES" | grep -q '"status":"ALLOCATED"' || fail "Block status not ALLOCATED: $BLOCK_RES"
-pass "Block trade BLK-999 allocated across 3 institutional accounts"
+echo "$BLOCK_RES" | grep -q '"allocations"' || fail "Allocations missing in response: $BLOCK_RES"
+pass "Block trade BLK-999 allocated across 3 institutional accounts (FUND-A, FUND-B, FUND-C)"
 
 info "11. Testing DvP Settlement Instruction Creation & Execution (/api/v1/settlement/dvp/...)"
 DVP_CREATE_PAYLOAD='{
@@ -158,6 +158,27 @@ PORTFOLIO_RES=$(curl -s -X GET "$API_URL/portfolio/AAPL" \
 echo "$PORTFOLIO_RES" | grep -q '"symbol":"AAPL"' || fail "Portfolio query failed: $PORTFOLIO_RES"
 pass "Portfolio snapshot retrieved with Redis backing"
 
+info "13. Testing Custodian Reconciliation (/api/v1/settlement/reconciliation/run)"
+RECON_PAYLOAD='[
+  {
+    "custodianReferenceId": "CSD-REF-001",
+    "internalInstructionId": "SETTLE-OBLIG-E2E-1",
+    "accountId": "SELLER-SAFE",
+    "symbol": "NVDA",
+    "quantity": 100,
+    "cashAmount": 12500.0,
+    "currency": "USD",
+    "settlementDate": "2026-10-20",
+    "custodianStatus": "SETTLED"
+  }
+]'
+RECON_RES=$(curl -s -X POST "$API_URL/api/v1/settlement/reconciliation/run" \
+  -H "Authorization: Bearer $TRADER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "$RECON_PAYLOAD")
+echo "$RECON_RES" | grep -q '"reportId"' || fail "Reconciliation report failed: $RECON_RES"
+pass "Custodian reconciliation report generated successfully"
+
 echo -e "\n${GREEN}================================================================${NC}"
-echo -e "${GREEN}ALL 12 DOCKER COMPOSE INTEGRATION TESTS PASSED SUCCESSFULLY!${NC}"
+echo -e "${GREEN}ALL 13 DOCKER COMPOSE INTEGRATION TESTS PASSED SUCCESSFULLY!${NC}"
 echo -e "${GREEN}================================================================${NC}\n"

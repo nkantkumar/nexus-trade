@@ -137,4 +137,66 @@ To compile the project and execute all JUnit 5 unit and integration tests:
 mvn clean test
 ```
 
-All 16 test cases covering Aeron IPC pub/sub, block allocations, multilateral netting, DvP state machine, ISO 20022 XML generation, corporate actions, buy-ins, and CSD reconciliation pass with 100% success.
+All unit and integration tests covering Aeron IPC pub/sub, block allocations, multilateral netting, DvP state machine, ISO 20022 XML generation, corporate actions, buy-ins, and CSD reconciliation pass with 100% success.
+
+---
+
+## Local Docker Deployment & Testing
+
+Nexus Trade includes a complete, orchestratable local deployment stack via [Docker Compose](file:///Users/nishi/Documents/GitHub/nexus-trade/docker-compose.yml):
+
+### Architecture & Services in Docker Compose
+
+| Service | Container Name | Image | Port | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **nexus-trade** | `nexus-trade` | Multi-stage OpenJDK 21 | `8081` | Core Spring Boot application with JVM `--add-opens` flags for Aeron/Chronicle IPC and 512MB `/dev/shm` shared memory. |
+| **keycloak** | `nexus-keycloak` | `quay.io/keycloak/keycloak:latest` | `8080` | Identity provider preloaded with `nexus-trade` realm, roles (`TRADER`, `ADMIN`), and clients (`nexus-client`, `nexus-service`). |
+| **kafka** | `nexus-kafka` | `apache/kafka:3.8.0` | `9092`, `29092` | Ultra-fast Kafka broker in KRaft mode (no ZooKeeper overhead) with JSON event serialization for trade and risk events. |
+| **redis** | `nexus-redis` | `redis:alpine` | `6379` | In-memory key-value store for real-time portfolio tracking, positions, and risk limits. |
+
+### Quick Start
+
+1. **Build and start the entire stack**:
+   ```bash
+   docker compose up -d --build
+   ```
+   The compose configuration uses `depends_on` healthchecks, guaranteeing that `nexus-trade` only starts after Redis, Kafka, and Keycloak are healthy.
+
+2. **Verify container health**:
+   ```bash
+   docker compose ps
+   ```
+
+3. **Run the automated end-to-end integration test suite**:
+   ```bash
+   ./scripts/test-docker-deployment.sh
+   ```
+   This script runs 13 end-to-end integration tests:
+   - Container health and Spring Boot Actuator status
+   - Keycloak JWT authentication for `trader1` and `admin1`
+   - Role-Based Access Control (RBAC) verification (`ROLE_TRADER`, `ROLE_ADMIN`, and `403 Forbidden` checks)
+   - Real-time trade ingestion via Aeron binary codec and CCP novation
+   - Kafka event publishing (`trade-cleared-events`)
+   - Multilateral netting calculation batch
+   - Institutional block trade pro-rata allocation
+   - DvP atomic cash & securities settlement state machine
+   - Redis portfolio balance query
+   - Custodian CSD feed reconciliation report
+
+4. **Stop the stack**:
+   ```bash
+   docker compose down
+   # Or to remove data volumes:
+   docker compose down -v
+   ```
+
+### Default Credentials
+
+| Service | Username / Client ID | Password / Secret | Roles |
+| :--- | :--- | :--- | :--- |
+| Keycloak Admin Console | `admin` | `admin` | Realm Administrator |
+| Trader User | `trader1` | `trader123` | `TRADER` |
+| Admin User | `admin1` | `admin123` | `ADMIN`, `TRADER` |
+| Public Client (Frontend/API) | `nexus-client` | *(none - public PKCE / Direct Access)* | - |
+| Machine-to-Machine Client | `nexus-service` | `nexus-service-secret-12345` | - |
+
