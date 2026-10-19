@@ -8,13 +8,20 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +34,57 @@ public class IdentityService {
     public IdentityService(JwtEncoder jwtEncoder, StringRedisTemplate redisTemplate) {
         this.jwtEncoder = jwtEncoder;
         this.redisTemplate = redisTemplate;
+    }
+
+    /**
+     * Resolves the current authenticated user's normalized identity.
+     */
+    public UserIdentity getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return getCurrentUser(authentication);
+    }
+
+    /**
+     * Extracts normalized identity details from the given Authentication instance.
+     */
+    public UserIdentity getCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return new UserIdentity("anonymous", "anonymous", null, Set.of(), Set.of());
+        }
+
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            Jwt jwt = jwtAuth.getToken();
+            String userId = jwt.getSubject();
+            String username = jwt.getClaimAsString("preferred_username");
+            if (username == null || username.isBlank()) {
+                username = userId;
+            }
+            String email = jwt.getClaimAsString("email");
+
+            Set<String> roles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .filter(a -> a.startsWith("ROLE_"))
+                    .collect(Collectors.toSet());
+
+            Set<String> scopes = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .filter(a -> a.startsWith("SCOPE_"))
+                    .collect(Collectors.toSet());
+
+            return new UserIdentity(userId, username, email, roles, scopes);
+        }
+
+        Set<String> authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+
+        return new UserIdentity(
+                authentication.getName(),
+                authentication.getName(),
+                null,
+                authorities,
+                Set.of()
+        );
     }
 
     public AuthResult authenticate(LoginRequest request) {

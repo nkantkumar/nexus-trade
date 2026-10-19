@@ -1,6 +1,15 @@
+server:
+  port: 8081
+
 spring:
   application:
     name: nexus-trade
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/nexus-trade}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/nexus-trade/protocol/openid-connect/certs}
   datasource:
     url: jdbc:h2:mem:trade;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
