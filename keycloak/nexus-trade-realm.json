@@ -1,0 +1,123 @@
+{
+  "realm": "nexus-trade",
+  "enabled": true,
+  "displayName": "Nexus Trade Realm",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "TRADER",
+        "description": "Trader role allowed to place orders and view portfolios"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Administrator role allowed full administrative access"
+      },
+      {
+        "name": "RISK_MANAGER",
+        "description": "Risk manager role allowed to monitor and update limits"
+      }
+    ]
+  },
+  "defaultRoles": [
+    "offline_access",
+    "uma_authorization"
+  ],
+  "clients": [
+    {
+      "clientId": "nexus-client",
+      "name": "Nexus Trade Frontend / API Client",
+      "description": "Public client using Authorization Code Flow + PKCE or Direct Access Grants",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:8081/*",
+        "http://localhost:3000/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "nexus-service",
+      "name": "Nexus Machine-to-Machine Service",
+      "description": "Confidential client for machine-to-machine automated services",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "nexus-service-secret-12345",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "trader1",
+      "enabled": true,
+      "email": "trader1@nexus.trade",
+      "firstName": "Alex",
+      "lastName": "Trader",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "trader123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "TRADER"
+      ]
+    },
+    {
+      "username": "admin1",
+      "enabled": true,
+      "email": "admin1@nexus.trade",
+      "firstName": "Sam",
+      "lastName": "Admin",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN",
+        "TRADER"
+      ]
+    }
+  ]
+}

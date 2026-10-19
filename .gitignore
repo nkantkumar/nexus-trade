@@ -1,0 +1,30 @@
+# Maven build directory
+target/
+*.class
+
+# Log files
+*.log
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Chronicle Queue / Aeron shared memory or temporary test dumps
+*.cq4
+*.cq4t
